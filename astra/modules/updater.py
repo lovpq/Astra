@@ -108,10 +108,10 @@ class UpdaterMod(loader.Module):
         if self._pending not in {utils.get_git_hash(), self._notified}:
             m = await self.inline.bot.send_photo(
                 self.tg_id,
-                "https://raw.githubusercontent.com/lovpq/Astra/refs/heads/master/assets/astra-update.png",
+                "https://raw.githubusercontent.com/lovpq/astra/refs/heads/master/assets/astra-update.png",
                 caption=self.strings("update_required").format(
                     utils.get_git_hash()[:6],
-                    '<a href="https://github.com/lovpq/Astra/compare/{}...{}">{}</a>'.format(
+                    '<a href="https://github.com/lovpq/astra/compare/{}...{}">{}</a>'.format(
                         utils.get_git_hash()[:12],
                         self.get_latest()[:12],
                         self.get_latest()[:6],

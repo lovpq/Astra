@@ -80,7 +80,7 @@ class TokenObtainment(InlineUnit):
                 from .. import main
 
                 if "DOCKER" in os.environ():
-                    m = await conv.send_file("https://raw.githubusercontent.com/coddrago/astra/refs/heads/master/assets/astra-ava.png")
+                    m = await conv.send_file("https://raw.githubusercontent.com/lovpq/astra/refs/heads/master/assets/astra-ava.png")
                 else:
                     m = await conv.send_file(main.BASE_PATH / "assets" / "astra-ava.png")
                 r = await conv.get_response()

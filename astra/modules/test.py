@@ -418,7 +418,7 @@ class TestMod(loader.Module):
             "⭐ Your astra logs will appear in this chat",
             silent=True,
             invite_bot=True,
-            avatar="https://raw.githubusercontent.com/lovpq/Astra/assets/astra-logs.png",
+            avatar="https://raw.githubusercontent.com/lovpq/astra/master/assets/astra-logs.png",
         )
 
         self.logchat = int(f"-100{chat.id}")
