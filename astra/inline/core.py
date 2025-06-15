@@ -241,26 +241,45 @@ class InlineManager(
 
         async def event_poller():
             nonlocal exception
-            await event.wait()
-            if self._error_events.get(unit_id):
-                exception = self._error_events[unit_id]
+            try:
+                await asyncio.wait_for(event.wait(), timeout=5)
+                if self._error_events.get(unit_id):
+                    exception = self._error_events[unit_id]
+            except asyncio.TimeoutError:
+                logger.error("Timeout waiting for inline query results")
 
         result_getter_task = asyncio.ensure_future(result_getter())
         event_poller_task = asyncio.ensure_future(event_poller())
 
-        await asyncio.gather(result_getter_task, event_poller_task)
+        _, pending = await asyncio.wait(
+            [result_getter_task, event_poller_task],
+            return_when=asyncio.FIRST_COMPLETED,
+        )
+
+        for task in pending:
+            task.cancel()
 
         self._error_events.pop(unit_id, None)
 
         if exception:
-            raise exception  # skipcq: PYL-E0702
+            if isinstance(exception, BaseException):
+                raise exception
+            else:
+                raise Exception(str(exception))
 
         if not q:
             raise Exception("No query results")
 
-        return await q[0].click(
-            utils.get_chat_id(message) if isinstance(message, Message) else message,
-            reply_to=(
-                message.reply_to_msg_id if isinstance(message, Message) else None
-            ),
-        )
+        try:
+            return await q[0].click(
+                utils.get_chat_id(message) if isinstance(message, Message) else message,
+                reply_to=(
+                    message.reply_to_msg_id if isinstance(message, Message) else None
+                ),
+            )
+        except Exception as e:
+            logger.error(f"Error clicking inline result: {e}")
+            if isinstance(message, Message):
+                return await message.respond("Error sending inline message. Please try again.")
+            else:
+                return await self._client.send_message(message, "Error sending inline message. Please try again.")
