@@ -998,31 +998,42 @@ class astra:
         self.loop.stop()
 
     def main(self):
-        """Main entrypoint"""
-        if sys.platform != "win32":
-            try:
-                self.loop.add_signal_handler(
-                    signal.SIGINT,
-                    lambda: asyncio.create_task(self._shutdown_handler())
-                )
-            except NotImplementedError:
-                logging.warning("Signal handlers not supported on this platform.")
-        else:
-            logging.info("Running on Windows — skipping signal handler.")
-
+        """Main entry point"""
         try:
+            import signal
+
+            def signal_handler(sig, frame):
+                logger.info("Received shutdown signal, cleaning up...")
+                for client in self.clients:
+                    try:
+                        self.loop.run_until_complete(client.disconnect())
+                    except Exception as e:
+                        logger.error(f"Error disconnecting client: {e}")
+                logger.info("Bye!")
+                sys.exit(0)
+
+            signal.signal(signal.SIGINT, signal_handler)
+            signal.signal(signal.SIGTERM, signal_handler)
+
             self.loop.run_until_complete(self._main())
         except KeyboardInterrupt:
-            logging.info("KeyboardInterrupt received.")
-            self.loop.run_until_complete(self._shutdown_handler())
+            logger.info("Received keyboard interrupt, cleaning up...")
+            for client in self.clients:
+                try:
+                    self.loop.run_until_complete(client.disconnect())
+                except Exception as e:
+                    logger.error(f"Error disconnecting client: {e}")
+            logger.info("Bye!")
         except Exception as e:
-            logging.exception("Unexpected exception in main loop: %s", e)
+            logger.error(f"Unexpected exception in main loop: {e}")
+            logger.info("Bye!")
+            raise
         finally:
-            logging.info("Bye!")
             try:
-                self.loop.run_until_complete(self._shutdown_handler())
-            except:
-                pass
+                self.loop.run_until_complete(self.loop.shutdown_asyncgens())
+                self.loop.close()
+            except Exception as e:
+                logger.error(f"Error during cleanup: {e}")
 
 astratl.extensions.html.CUSTOM_EMOJIS = not get_config_key("disable_custom_emojis")
 
