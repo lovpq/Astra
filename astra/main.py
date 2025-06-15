@@ -1009,6 +1009,15 @@ class astra:
                         self.loop.run_until_complete(client.disconnect())
                     except Exception as e:
                         logger.error(f"Error disconnecting client: {e}")
+                
+                # Закрываем веб-сервер если он запущен
+                if hasattr(self, 'web') and self.web and hasattr(self.web, 'site'):
+                    try:
+                        self.loop.run_until_complete(self.web.site.stop())
+                        logger.info("Web server stopped")
+                    except Exception as e:
+                        logger.error(f"Error stopping web server: {e}")
+
                 logger.info("Bye!")
                 sys.exit(0)
 
@@ -1023,6 +1032,15 @@ class astra:
                     self.loop.run_until_complete(client.disconnect())
                 except Exception as e:
                     logger.error(f"Error disconnecting client: {e}")
+            
+            # Закрываем веб-сервер если он запущен
+            if hasattr(self, 'web') and self.web and hasattr(self.web, 'site'):
+                try:
+                    self.loop.run_until_complete(self.web.site.stop())
+                    logger.info("Web server stopped")
+                except Exception as e:
+                    logger.error(f"Error stopping web server: {e}")
+
             logger.info("Bye!")
         except Exception as e:
             logger.error(f"Unexpected exception in main loop: {e}")
@@ -1030,6 +1048,14 @@ class astra:
             raise
         finally:
             try:
+                # Закрываем веб-сервер если он запущен
+                if hasattr(self, 'web') and self.web and hasattr(self.web, 'site'):
+                    try:
+                        self.loop.run_until_complete(self.web.site.stop())
+                        logger.info("Web server stopped")
+                    except Exception as e:
+                        logger.error(f"Error stopping web server: {e}")
+
                 self.loop.run_until_complete(self.loop.shutdown_asyncgens())
                 self.loop.close()
             except Exception as e:
