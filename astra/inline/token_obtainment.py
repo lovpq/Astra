@@ -53,10 +53,10 @@ class TokenObtainment(InlineUnit):
                     pass
                 else:
                     uid = utils.rand(6)
-                    username = f"@astra{uid}_bot"
+                    username = f"@astra_{uid}_bot"
             else:
                 uid = utils.rand(6)
-                username = f"@astra{uid}_bot"
+                username = f"@astra_{uid}_bot"
 
             for msg in [
                 f"⭐ astra"[:64],
@@ -82,7 +82,7 @@ class TokenObtainment(InlineUnit):
                 if "DOCKER" in os.environ():
                     m = await conv.send_file("https://raw.githubusercontent.com/lovpq/astra/refs/heads/master/assets/astra-ava.png")
                 else:
-                    m = await conv.send_file(main.BASE_PATH / "assets" / "heroku-ava.png")
+                    m = await conv.send_file(main.BASE_PATH / "assets" / "astra-ava.png")
                 r = await conv.get_response()
 
                 logger.debug(">> <Photo>")
@@ -147,9 +147,9 @@ class TokenObtainment(InlineUnit):
             for row in r.reply_markup.rows:
                 for button in row.buttons:
                     if self._db.get(
-                        "heroku.inline", "custom_bot", False
+                        "astra.inline", "custom_bot", False
                     ) and self._db.get(
-                        "heroku.inline", "custom_bot", False
+                        "astra.inline", "custom_bot", False
                     ) != button.text.strip("@"):
                         continue
 

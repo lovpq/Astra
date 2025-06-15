@@ -227,12 +227,6 @@ class InlineManager(
         return True
 
     async def _invoke_unit(self, unit_id: str, message: Message) -> Message:
-        if not self.init_complete:
-            if isinstance(message, Message):
-                return await message.respond("Inline bot is not initialized yet. Please wait...")
-            else:
-                return await self._client.send_message(message, "Inline bot is not initialized yet. Please wait...")
-
         event = asyncio.Event()
         self._error_events[unit_id] = event
 
@@ -241,22 +235,14 @@ class InlineManager(
 
         async def result_getter():
             nonlocal unit_id, q
-            try:
+            with contextlib.suppress(Exception):
                 q = await self._client.inline_query(self.bot_username, unit_id)
-                if q and hasattr(q, 'result') and q.result:
-                    event.set()
-            except Exception as e:
-                logger.error(f"Error in inline query: {e}")
-                event.set()
 
         async def event_poller():
             nonlocal exception
-            try:
-                await asyncio.wait_for(event.wait(), timeout=10)
-                if self._error_events.get(unit_id):
-                    exception = self._error_events[unit_id]
-            except asyncio.TimeoutError:
-                logger.error("Timeout waiting for inline query results")
+            await asyncio.wait_for(event.wait(), timeout=10)
+            if self._error_events.get(unit_id):
+                exception = self._error_events[unit_id]
 
         result_getter_task = asyncio.ensure_future(result_getter())
         event_poller_task = asyncio.ensure_future(event_poller())
@@ -271,31 +257,15 @@ class InlineManager(
 
         self._error_events.pop(unit_id, None)
 
-        if exception and isinstance(exception, BaseException):
+        if exception:
             raise exception  # skipcq: PYL-E0702
 
-        if not q or not hasattr(q, 'result') or not q.result:
-            # Если нет результатов, отправляем обычное сообщение
-            if isinstance(message, Message):
-                return await message.respond("No inline results available. Please try again in a few seconds.")
-            else:
-                return await self._client.send_message(message, "No inline results available. Please try again in a few seconds.")
+        if not q:
+            raise Exception("No query results")
 
-        try:
-            # Получаем первый результат из списка
-            first_result = next(iter(q.result), None)
-            if not first_result:
-                raise Exception("No results available")
-
-            return await first_result.click(
-                utils.get_chat_id(message) if isinstance(message, Message) else message,
-                reply_to=(
-                    message.reply_to_msg_id if isinstance(message, Message) else None
-                ),
-            )
-        except Exception as e:
-            logger.error(f"Error clicking inline result: {e}")
-            if isinstance(message, Message):
-                return await message.respond("Error sending inline message. Please try again.")
-            else:
-                return await self._client.send_message(message, "Error sending inline message. Please try again.")
+        return await q[0].click(
+            utils.get_chat_id(message) if isinstance(message, Message) else message,
+            reply_to=(
+                message.reply_to_msg_id if isinstance(message, Message) else None
+            ),
+        )
