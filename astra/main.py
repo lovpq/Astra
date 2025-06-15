@@ -857,21 +857,25 @@ class astra:
                 )
                 self.omit_log = True
 
-            await client.astra_inline.bot.send_photo(
-                logging.getLogger().handlers[0].get_logid_by_client(client.tg_id),
-                "https://i.imgur.com/deRmOxI.jpeg",
-                caption=(
-                    "⭐ <b>Astra {} started!</b>\n\n⚙ <b>GitHub commit SHA: <a"
-                    ' href="https://github.com/lovpq/Astra/commit/{}">{}</a></b>\n🔎'
-                    " <b>Update status: {}</b>\n<b>{}</b>".format(
-                        ".".join(list(map(str, list(__version__)))),
-                        build,
-                        build[:7],
-                        upd,
-                        web_url,
+            if hasattr(client, 'astra_inline') and client.astra_inline and hasattr(client.astra_inline, 'bot') and client.astra_inline.bot:
+                try:
+                    await client.astra_inline.bot.send_photo(
+                        logging.getLogger().handlers[0].get_logid_by_client(client.tg_id),
+                        "https://i.imgur.com/deRmOxI.jpeg",
+                        caption=(
+                            "⭐ <b>Astra {} started!</b>\n\n⚙ <b>GitHub commit SHA: <a"
+                            ' href="https://github.com/lovpq/Astra/commit/{}">{}</a></b>\n🔎'
+                            " <b>Update status: {}</b>\n<b>{}</b>".format(
+                                ".".join(list(map(str, list(__version__)))),
+                                build,
+                                build[:7],
+                                upd,
+                                web_url,
+                            )
+                        ),
                     )
-                ),
-            )
+                except Exception:
+                    logging.debug("Could not send badge photo, continuing...")
 
             logging.debug(
                 "· Started for %s · Prefix: «%s» ·",

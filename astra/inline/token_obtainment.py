@@ -141,118 +141,44 @@ class TokenObtainment(InlineUnit):
 
             if not hasattr(r, "reply_markup") or not hasattr(r.reply_markup, "rows"):
                 await conv.cancel_all()
-
                 return await self._create_bot() if create_new_if_needed else False
 
-            for row in r.reply_markup.rows:
-                for button in row.buttons:
-                    if self._db.get(
-                        "astra.inline", "custom_bot", False
-                    ) and self._db.get(
-                        "astra.inline", "custom_bot", False
-                    ) != button.text.strip("@"):
-                        continue
+            if self._db.get("astra.inline", "custom_bot", False):
+                bot_username = self._db.get("astra.inline", "custom_bot").strip("@")
+                for row in r.reply_markup.rows:
+                    for button in row.buttons:
+                        if button.text.strip("@") == bot_username:
+                            await fw_protect()
+                            m = await conv.send_message(button.text)
+                            r = await conv.get_response()
+                            
+                            token = r.raw_text.splitlines()[1]
+                            self._db.set("astra.inline", "bot_token", token)
+                            self._token = token
+                            
+                            await fw_protect()
+                            await m.delete()
+                            await r.delete()
+                            return True
+            else:
+                for row in r.reply_markup.rows:
+                    for button in row.buttons:
+                        if re.search(r"@astra_[0-9a-zA-Z]{6}_bot", button.text):
+                            await fw_protect()
+                            m = await conv.send_message(button.text)
+                            r = await conv.get_response()
+                            
+                            token = r.raw_text.splitlines()[1]
+                            self._db.set("astra.inline", "bot_token", token)
+                            self._token = token
+                            
+                            await fw_protect()
+                            await m.delete()
+                            await r.delete()
+                            return True
 
-                    if not self._db.get(
-                        "astra.inline",
-                        "custom_bot",
-                        False,
-                    ) and not re.search(r"@astra_[0-9a-zA-Z]{6}_bot", button.text):
-                        continue
-
-                    await fw_protect()
-
-                    m = await conv.send_message(button.text)
-                    r = await conv.get_response()
-
-                    logger.debug(">> %s", m.raw_text)
-                    logger.debug("<< %s", r.raw_text)
-
-                    if revoke_token:
-                        await fw_protect()
-                        await m.delete()
-                        await r.delete()
-
-                        await fw_protect()
-
-                        m = await conv.send_message("/revoke")
-                        r = await conv.get_response()
-
-                        logger.debug(">> %s", m.raw_text)
-                        logger.debug("<< %s", r.raw_text)
-
-                        await fw_protect()
-
-                        await m.delete()
-                        await r.delete()
-
-                        await fw_protect()
-
-                        m = await conv.send_message(button.text)
-                        r = await conv.get_response()
-
-                        logger.debug(">> %s", m.raw_text)
-                        logger.debug("<< %s", r.raw_text)
-
-                    token = r.raw_text.splitlines()[1]
-
-                    self._db.set("astra.inline", "bot_token", token)
-                    self._token = token
-
-                    await fw_protect()
-
-                    await m.delete()
-                    await r.delete()
-
-                    for msg in [
-                        "/setinline",
-                        button.text,
-                        "user@astra:~$",
-                        "/setinlinefeedback",
-                        button.text,
-                        "Enabled",
-                        "/setuserpic",
-                        button.text,
-                    ]:
-                        await fw_protect()
-                        m = await conv.send_message(msg)
-                        r = await conv.get_response()
-
-                        logger.debug(">> %s", m.raw_text)
-                        logger.debug("<< %s", r.raw_text)
-
-                        await fw_protect()
-
-                        await m.delete()
-                        await r.delete()
-
-                    try:
-                        await fw_protect()
-                        from .. import main
-
-                        m = await conv.send_file(
-                            main.BASE_PATH / "assets" / "astra-ava.png"
-                        )
-                        r = await conv.get_response()
-
-                        logger.debug(">> <Photo>")
-                        logger.debug("<< %s", r.raw_text)
-                    except Exception:
-                        await fw_protect()
-                        m = await conv.send_message("/cancel")
-                        r = await conv.get_response()
-
-                        logger.debug(">> %s", m.raw_text)
-                        logger.debug("<< %s", r.raw_text)
-
-                    await fw_protect()
-
-                    await m.delete()
-                    await r.delete()
-
-                    return True
-
-        return await self._create_bot() if create_new_if_needed else False
+            await conv.cancel_all()
+            return await self._create_bot() if create_new_if_needed else False
 
     async def _reassert_token(self):
         is_token_asserted = await self._assert_token(revoke_token=True)
