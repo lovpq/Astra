@@ -237,23 +237,18 @@ class InlineManager(
             nonlocal unit_id, q
             with contextlib.suppress(Exception):
                 q = await self._client.inline_query(self.bot_username, unit_id)
+                event.set()
 
         async def event_poller():
             nonlocal exception
-            await asyncio.wait_for(event.wait(), timeout=10)
+            await event.wait()
             if self._error_events.get(unit_id):
                 exception = self._error_events[unit_id]
 
         result_getter_task = asyncio.ensure_future(result_getter())
         event_poller_task = asyncio.ensure_future(event_poller())
 
-        _, pending = await asyncio.wait(
-            [result_getter_task, event_poller_task],
-            return_when=asyncio.FIRST_COMPLETED,
-        )
-
-        for task in pending:
-            task.cancel()
+        await asyncio.gather(result_getter_task, event_poller_task)
 
         self._error_events.pop(unit_id, None)
 
