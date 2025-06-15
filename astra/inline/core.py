@@ -235,14 +235,20 @@ class InlineManager(
 
         async def result_getter():
             nonlocal unit_id, q
-            with contextlib.suppress(Exception):
+            try:
                 q = await self._client.inline_query(self.bot_username, unit_id)
+            except Exception as e:
+                logger.error(f"Error in inline query: {e}")
+                event.set()
 
         async def event_poller():
             nonlocal exception
-            await asyncio.wait_for(event.wait(), timeout=10)
-            if self._error_events.get(unit_id):
-                exception = self._error_events[unit_id]
+            try:
+                await asyncio.wait_for(event.wait(), timeout=10)
+                if self._error_events.get(unit_id):
+                    exception = self._error_events[unit_id]
+            except asyncio.TimeoutError:
+                logger.error("Timeout waiting for inline query results")
 
         result_getter_task = asyncio.ensure_future(result_getter())
         event_poller_task = asyncio.ensure_future(event_poller())
@@ -260,8 +266,12 @@ class InlineManager(
         if exception:
             raise exception  # skipcq: PYL-E0702
 
-        if not q:
-            raise Exception("No query results")
+        if not q or not q.results:
+            # Если нет результатов, отправляем обычное сообщение
+            if isinstance(message, Message):
+                return await message.respond("No inline results available")
+            else:
+                return await self._client.send_message(message, "No inline results available")
 
         return await q[0].click(
             utils.get_chat_id(message) if isinstance(message, Message) else message,
