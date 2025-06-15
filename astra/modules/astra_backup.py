@@ -44,42 +44,42 @@ class astraBackupMod(loader.Module):
                     logger.error("Inline bot is not initialized")
                     return
                 
-                # Скачиваем изображение
-                async with aiohttp.ClientSession() as session:
-                    async with session.get("https://i.imgur.com/qZIum0P.jpeg") as response:
-                        if response.status == 200:
-                            photo_data = await response.read()
-                            photo = BufferedInputFile(photo_data, filename="backup.jpg")
-                            
-                            await self.inline.bot.send_photo(
-                                self.tg_id,
-                                photo=photo,
-                                caption=self.strings("period"),
-                                reply_markup=self.inline.generate_markup(
-                                    utils.chunks(
-                                        [
-                                            {
-                                                "text": f"🕰 {i} h",
-                                                "callback": self._set_backup_period,
-                                                "args": (i,),
-                                            }
-                                            for i in [1, 2, 4, 6, 8, 12, 24, 48, 168]
-                                        ],
-                                        3,
-                                    )
-                                    + [
-                                        [
-                                            {
-                                                "text": "🚫 Never",
-                                                "callback": self._set_backup_period,
-                                                "args": (0,),
-                                            }
-                                        ]
+                # Используем локальное изображение
+                photo_path = os.path.join("assets", "unit-alpha.png")
+                if os.path.exists(photo_path):
+                    with open(photo_path, "rb") as f:
+                        photo_data = f.read()
+                        photo = BufferedInputFile(photo_data, filename="unit-alpha.png")
+                        
+                        await self.inline.bot.send_photo(
+                            self.tg_id,
+                            photo=photo,
+                            caption=self.strings("period"),
+                            reply_markup=self.inline.generate_markup(
+                                utils.chunks(
+                                    [
+                                        {
+                                            "text": f"🕰 {i} h",
+                                            "callback": self._set_backup_period,
+                                            "args": (i,),
+                                        }
+                                        for i in [1, 2, 4, 6, 8, 12, 24, 48, 168]
+                                    ],
+                                    3,
+                                )
+                                + [
+                                    [
+                                        {
+                                            "text": "🚫 Never",
+                                            "callback": self._set_backup_period,
+                                            "args": (0,),
+                                        }
                                     ]
-                                ),
-                            )
-                        else:
-                            logger.error(f"Failed to download photo: {response.status}")
+                                ]
+                            ),
+                        )
+                else:
+                    logger.error("Backup image not found")
             except Exception as e:
                 logger.error(f"Failed to send backup period message: {e}")
 
