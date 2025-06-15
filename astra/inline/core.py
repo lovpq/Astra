@@ -227,6 +227,12 @@ class InlineManager(
         return True
 
     async def _invoke_unit(self, unit_id: str, message: Message) -> Message:
+        if not self.init_complete:
+            if isinstance(message, Message):
+                return await message.respond("Inline bot is not initialized yet. Please wait...")
+            else:
+                return await self._client.send_message(message, "Inline bot is not initialized yet. Please wait...")
+
         event = asyncio.Event()
         self._error_events[unit_id] = event
 
@@ -235,18 +241,25 @@ class InlineManager(
 
         async def result_getter():
             nonlocal unit_id, q
-            with contextlib.suppress(Exception):
+            try:
                 q = await self._client.inline_query(self.bot_username, unit_id)
+                if not q:
+                    raise Exception("No results from inline query")
+                event.set()
+            except Exception as e:
+                logger.error(f"Error in inline query: {e}")
+                exception = e
                 event.set()
 
         async def event_poller():
             nonlocal exception
             try:
-                await asyncio.wait_for(event.wait(), timeout=5)
+                await asyncio.wait_for(event.wait(), timeout=10)
                 if self._error_events.get(unit_id):
                     exception = self._error_events[unit_id]
             except asyncio.TimeoutError:
                 logger.error("Timeout waiting for inline query results")
+                exception = Exception("Timeout waiting for inline query results")
 
         result_getter_task = asyncio.ensure_future(result_getter())
         event_poller_task = asyncio.ensure_future(event_poller())
@@ -271,7 +284,16 @@ class InlineManager(
             raise Exception("No query results")
 
         try:
-            return await q[0].click(
+            # Проверяем, что q - это список и в нем есть элементы
+            if not isinstance(q, (list, tuple)) or not q:
+                raise Exception("Invalid query results format")
+
+            # Получаем первый результат
+            first_result = q[0]
+            if not first_result:
+                raise Exception("No valid results in query")
+
+            return await first_result.click(
                 utils.get_chat_id(message) if isinstance(message, Message) else message,
                 reply_to=(
                     message.reply_to_msg_id if isinstance(message, Message) else None
