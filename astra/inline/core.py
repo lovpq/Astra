@@ -282,7 +282,12 @@ class InlineManager(
                 return await self._client.send_message(message, "No inline results available. Please try again in a few seconds.")
 
         try:
-            return await q.result[0].click(
+            # Получаем первый результат из списка
+            first_result = next(iter(q.result), None)
+            if not first_result:
+                raise Exception("No results available")
+
+            return await first_result.click(
                 utils.get_chat_id(message) if isinstance(message, Message) else message,
                 reply_to=(
                     message.reply_to_msg_id if isinstance(message, Message) else None

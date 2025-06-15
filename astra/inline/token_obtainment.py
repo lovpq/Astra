@@ -53,13 +53,13 @@ class TokenObtainment(InlineUnit):
                     pass
                 else:
                     uid = utils.rand(6)
-                    username = f"@astra_{uid}_bot"
+                    username = f"@astra{uid}_bot"
             else:
                 uid = utils.rand(6)
-                username = f"@astra_{uid}_bot"
+                username = f"@astra{uid}_bot"
 
             for msg in [
-                f"⭐ astra userbot"[:64],
+                f"⭐ astra"[:64],
                 username,
                 "/setuserpic",
                 username,
@@ -82,7 +82,7 @@ class TokenObtainment(InlineUnit):
                 if "DOCKER" in os.environ():
                     m = await conv.send_file("https://raw.githubusercontent.com/lovpq/astra/refs/heads/master/assets/astra-ava.png")
                 else:
-                    m = await conv.send_file(main.BASE_PATH / "assets" / "astra-ava.png")
+                    m = await conv.send_file(main.BASE_PATH / "assets" / "heroku-ava.png")
                 r = await conv.get_response()
 
                 logger.debug(">> <Photo>")
@@ -141,122 +141,118 @@ class TokenObtainment(InlineUnit):
 
             if not hasattr(r, "reply_markup") or not hasattr(r.reply_markup, "rows"):
                 await conv.cancel_all()
+
                 return await self._create_bot() if create_new_if_needed else False
 
-            if self._db.get("astra.inline", "custom_bot", False):
-                bot_username = self._db.get("astra.inline", "custom_bot").strip("@")
-                for row in r.reply_markup.rows:
-                    for button in row.buttons:
-                        if button.text.strip("@") == bot_username:
-                            await fw_protect()
-                            m = await conv.send_message(button.text)
-                            r = await conv.get_response()
-                            
-                            token = r.raw_text.splitlines()[1]
-                            self._db.set("astra.inline", "bot_token", token)
-                            self._token = token
-                            
-                            await fw_protect()
-                            await m.delete()
-                            await r.delete()
+            for row in r.reply_markup.rows:
+                for button in row.buttons:
+                    if self._db.get(
+                        "heroku.inline", "custom_bot", False
+                    ) and self._db.get(
+                        "heroku.inline", "custom_bot", False
+                    ) != button.text.strip("@"):
+                        continue
 
-                            # Настраиваем инлайн режим
-                            await fw_protect()
-                            m = await conv.send_message("/setinline")
-                            r = await conv.get_response()
-                            await m.delete()
-                            await r.delete()
+                    if not self._db.get(
+                        "astra.inline",
+                        "custom_bot",
+                        False,
+                    ) and not re.search(r"@astra[0-9a-zA-Z]{6}_bot", button.text):
+                        continue
 
-                            await fw_protect()
-                            m = await conv.send_message(f"@{bot_username}")
-                            r = await conv.get_response()
-                            await m.delete()
-                            await r.delete()
+                    await fw_protect()
 
-                            await fw_protect()
-                            m = await conv.send_message("user@astra:~$")
-                            r = await conv.get_response()
-                            await m.delete()
-                            await r.delete()
+                    m = await conv.send_message(button.text)
+                    r = await conv.get_response()
 
-                            # Включаем инлайн режим
-                            await fw_protect()
-                            m = await conv.send_message("/setinlinefeedback")
-                            r = await conv.get_response()
-                            await m.delete()
-                            await r.delete()
+                    logger.debug(">> %s", m.raw_text)
+                    logger.debug("<< %s", r.raw_text)
 
-                            await fw_protect()
-                            m = await conv.send_message(f"@{bot_username}")
-                            r = await conv.get_response()
-                            await m.delete()
-                            await r.delete()
+                    if revoke_token:
+                        await fw_protect()
+                        await m.delete()
+                        await r.delete()
 
-                            await fw_protect()
-                            m = await conv.send_message("Enabled")
-                            r = await conv.get_response()
-                            await m.delete()
-                            await r.delete()
+                        await fw_protect()
 
-                            return True
-            else:
-                for row in r.reply_markup.rows:
-                    for button in row.buttons:
-                        if re.search(r"@astra_[0-9a-zA-Z]{6}_bot", button.text):
-                            await fw_protect()
-                            m = await conv.send_message(button.text)
-                            r = await conv.get_response()
-                            
-                            token = r.raw_text.splitlines()[1]
-                            self._db.set("astra.inline", "bot_token", token)
-                            self._token = token
-                            
-                            await fw_protect()
-                            await m.delete()
-                            await r.delete()
+                        m = await conv.send_message("/revoke")
+                        r = await conv.get_response()
 
-                            # Настраиваем инлайн режим
-                            await fw_protect()
-                            m = await conv.send_message("/setinline")
-                            r = await conv.get_response()
-                            await m.delete()
-                            await r.delete()
+                        logger.debug(">> %s", m.raw_text)
+                        logger.debug("<< %s", r.raw_text)
 
-                            await fw_protect()
-                            m = await conv.send_message(button.text)
-                            r = await conv.get_response()
-                            await m.delete()
-                            await r.delete()
+                        await fw_protect()
 
-                            await fw_protect()
-                            m = await conv.send_message("user@astra:~$")
-                            r = await conv.get_response()
-                            await m.delete()
-                            await r.delete()
+                        await m.delete()
+                        await r.delete()
 
-                            # Включаем инлайн режим
-                            await fw_protect()
-                            m = await conv.send_message("/setinlinefeedback")
-                            r = await conv.get_response()
-                            await m.delete()
-                            await r.delete()
+                        await fw_protect()
 
-                            await fw_protect()
-                            m = await conv.send_message(button.text)
-                            r = await conv.get_response()
-                            await m.delete()
-                            await r.delete()
+                        m = await conv.send_message(button.text)
+                        r = await conv.get_response()
 
-                            await fw_protect()
-                            m = await conv.send_message("Enabled")
-                            r = await conv.get_response()
-                            await m.delete()
-                            await r.delete()
+                        logger.debug(">> %s", m.raw_text)
+                        logger.debug("<< %s", r.raw_text)
 
-                            return True
+                    token = r.raw_text.splitlines()[1]
 
-            await conv.cancel_all()
-            return await self._create_bot() if create_new_if_needed else False
+                    self._db.set("astra.inline", "bot_token", token)
+                    self._token = token
+
+                    await fw_protect()
+
+                    await m.delete()
+                    await r.delete()
+
+                    for msg in [
+                        "/setinline",
+                        button.text,
+                        "user@astra:~$",
+                        "/setinlinefeedback",
+                        button.text,
+                        "Enabled",
+                        "/setuserpic",
+                        button.text,
+                    ]:
+                        await fw_protect()
+                        m = await conv.send_message(msg)
+                        r = await conv.get_response()
+
+                        logger.debug(">> %s", m.raw_text)
+                        logger.debug("<< %s", r.raw_text)
+
+                        await fw_protect()
+
+                        await m.delete()
+                        await r.delete()
+
+                    try:
+                        await fw_protect()
+                        from .. import main
+
+                        m = await conv.send_file(
+                            main.BASE_PATH / "assets" / "astra-ava.png"
+                        )
+                        r = await conv.get_response()
+
+                        logger.debug(">> <Photo>")
+                        logger.debug("<< %s", r.raw_text)
+                    except Exception:
+                        await fw_protect()
+                        m = await conv.send_message("/cancel")
+                        r = await conv.get_response()
+
+                        logger.debug(">> %s", m.raw_text)
+                        logger.debug("<< %s", r.raw_text)
+
+                    await fw_protect()
+
+                    await m.delete()
+                    await r.delete()
+
+                    return True
+
+        return await self._create_bot() if create_new_if_needed else False
 
     async def _reassert_token(self):
         is_token_asserted = await self._assert_token(revoke_token=True)

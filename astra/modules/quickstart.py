@@ -37,10 +37,14 @@ class Quickstart(loader.Module):
     strings = {"name": "Quickstart"}
 
     async def client_ready(self):
-        await self.request_join(
-            "astra_talks", 
-            "astra help is only available in this chat. By agreeing to join the chat, you agree to the astra federation rules and if you violate them, you will be permanently banned."
-        )
+        try:
+            await self.request_join(
+                "astra_talks", 
+                "astra help is only available in this chat. By agreeing to join the chat, you agree to the astra federation rules and if you violate them, you will be permanently banned."
+            )
+        except Exception as e:
+            logger.error(f"Failed to join astra_talks channel: {e}")
+            # Продолжаем выполнение даже если не удалось присоединиться к каналу
 
         self.mark = lambda: [
             [

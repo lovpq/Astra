@@ -38,44 +38,54 @@ class astraBackupMod(loader.Module):
 
     async def client_ready(self):
         if not self.get("period"):
-            await self.inline.bot.send_photo(
-                self.tg_id,
-                photo="https://i.imgur.com/qZIum0P.jpeg",
-                caption=self.strings("period"),
-                reply_markup=self.inline.generate_markup(
-                    utils.chunks(
-                        [
-                            {
-                                "text": f"🕰 {i} h",
-                                "callback": self._set_backup_period,
-                                "args": (i,),
-                            }
-                            for i in [1, 2, 4, 6, 8, 12, 24, 48, 168]
-                        ],
-                        3,
-                    )
-                    + [
-                        [
-                            {
-                                "text": "🚫 Never",
-                                "callback": self._set_backup_period,
-                                "args": (0,),
-                            }
+            try:
+                if not self.inline or not self.inline.bot:
+                    logger.error("Inline bot is not initialized")
+                    return
+                    
+                await self.inline.bot.send_photo(
+                    self.tg_id,
+                    photo="https://i.imgur.com/qZIum0P.jpeg",
+                    caption=self.strings("period"),
+                    reply_markup=self.inline.generate_markup(
+                        utils.chunks(
+                            [
+                                {
+                                    "text": f"🕰 {i} h",
+                                    "callback": self._set_backup_period,
+                                    "args": (i,),
+                                }
+                                for i in [1, 2, 4, 6, 8, 12, 24, 48, 168]
+                            ],
+                            3,
+                        )
+                        + [
+                            [
+                                {
+                                    "text": "🚫 Never",
+                                    "callback": self._set_backup_period,
+                                    "args": (0,),
+                                }
+                            ]
                         ]
-                    ]
-                ),
-            )
+                    ),
+                )
+            except Exception as e:
+                logger.error(f"Failed to send backup period message: {e}")
 
-        self._backup_channel, _ = await utils.asset_channel(
-            self._client,
-            "astra-backups",
-            "📼 Your database backups will appear here",
-            silent=True,
-            archive=True,
-            avatar="",
-            _folder="astra",
-            invite_bot=True,
-        )
+        try:
+            self._backup_channel, _ = await utils.asset_channel(
+                self._client,
+                "astra-backups",
+                "📼 Your database backups will appear here",
+                silent=True,
+                archive=True,
+                avatar="",
+                _folder="astra",
+                invite_bot=True,
+            )
+        except Exception as e:
+            logger.error(f"Failed to create backup channel: {e}")
 
     async def _set_backup_period(self, call: BotInlineCall, value: int):
         if not value:
