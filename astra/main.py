@@ -41,6 +41,7 @@ import signal
 import socket
 import sqlite3
 import sys
+import time
 import typing
 from getpass import getpass
 from pathlib import Path
@@ -64,6 +65,7 @@ from astratl.password import compute_check
 from astratl.sessions import MemorySession, SQLiteSession
 from astratl.tl.functions.account import GetPasswordRequest
 from astratl.tl.functions.auth import CheckPasswordRequest
+from astratl.tl.types import Message
 
 from . import database, loader, utils, version
 from ._internal import print_banner, restart
@@ -73,6 +75,9 @@ from .secure import patcher
 from .tl_cache import CustomTelegramClient
 from .translations import Translator
 from .version import __version__
+from .web.core import WebCore
+
+logger = logging.getLogger(__name__)
 
 try:
     from .web import core
