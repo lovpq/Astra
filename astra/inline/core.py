@@ -243,7 +243,7 @@ class InlineManager(
             nonlocal unit_id, q
             try:
                 q = await self._client.inline_query(self.bot_username, unit_id)
-                if q and q.results:
+                if q and hasattr(q, 'result') and q.result:
                     event.set()
             except Exception as e:
                 logger.error(f"Error in inline query: {e}")
@@ -274,7 +274,7 @@ class InlineManager(
         if exception and isinstance(exception, BaseException):
             raise exception  # skipcq: PYL-E0702
 
-        if not q or not q.results:
+        if not q or not hasattr(q, 'result') or not q.result:
             # Если нет результатов, отправляем обычное сообщение
             if isinstance(message, Message):
                 return await message.respond("No inline results available. Please try again in a few seconds.")
@@ -282,7 +282,7 @@ class InlineManager(
                 return await self._client.send_message(message, "No inline results available. Please try again in a few seconds.")
 
         try:
-            return await q[0].click(
+            return await q.result[0].click(
                 utils.get_chat_id(message) if isinstance(message, Message) else message,
                 reply_to=(
                     message.reply_to_msg_id if isinstance(message, Message) else None
