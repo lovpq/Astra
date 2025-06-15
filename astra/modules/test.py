@@ -102,7 +102,7 @@ class TestMod(loader.Module):
             ),
             loader.ConfigValue(
                 "banner_url",
-                None,
+                "https://i.imgur.com/ebEM0XA.jpeg",
                 lambda: self.strings["banner_url"],
                 validator=loader.validators.String(),
             ),
