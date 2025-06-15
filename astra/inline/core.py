@@ -263,7 +263,7 @@ class InlineManager(
 
         self._error_events.pop(unit_id, None)
 
-        if exception:
+        if exception and isinstance(exception, BaseException):
             raise exception  # skipcq: PYL-E0702
 
         if not q or not q.results:
