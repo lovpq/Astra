@@ -75,7 +75,9 @@ from .secure import patcher
 from .tl_cache import CustomTelegramClient
 from .translations import Translator
 from .version import __version__
-from .web.core import WebCore
+from .web.core import Web
+from .inline.core import InlineManager
+from .inline.types import BotInlineCall
 
 logger = logging.getLogger(__name__)
 
@@ -509,7 +511,7 @@ class astra:
             self.web = None
             return
 
-        self.web = core.Web(
+        self.web = Web(
             data_root=BASE_DIR,
             api_token=self.api_token,
             proxy=self.proxy,
