@@ -159,6 +159,26 @@ class TokenObtainment(InlineUnit):
                             await fw_protect()
                             await m.delete()
                             await r.delete()
+
+                            # Настраиваем инлайн режим
+                            await fw_protect()
+                            m = await conv.send_message("/setinline")
+                            r = await conv.get_response()
+                            await m.delete()
+                            await r.delete()
+
+                            await fw_protect()
+                            m = await conv.send_message(f"@{bot_username}")
+                            r = await conv.get_response()
+                            await m.delete()
+                            await r.delete()
+
+                            await fw_protect()
+                            m = await conv.send_message("user@astra:~$")
+                            r = await conv.get_response()
+                            await m.delete()
+                            await r.delete()
+
                             return True
             else:
                 for row in r.reply_markup.rows:
@@ -175,6 +195,26 @@ class TokenObtainment(InlineUnit):
                             await fw_protect()
                             await m.delete()
                             await r.delete()
+
+                            # Настраиваем инлайн режим
+                            await fw_protect()
+                            m = await conv.send_message("/setinline")
+                            r = await conv.get_response()
+                            await m.delete()
+                            await r.delete()
+
+                            await fw_protect()
+                            m = await conv.send_message(button.text)
+                            r = await conv.get_response()
+                            await m.delete()
+                            await r.delete()
+
+                            await fw_protect()
+                            m = await conv.send_message("user@astra:~$")
+                            r = await conv.get_response()
+                            await m.delete()
+                            await r.delete()
+
                             return True
 
             await conv.cancel_all()

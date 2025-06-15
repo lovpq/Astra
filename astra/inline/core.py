@@ -227,6 +227,12 @@ class InlineManager(
         return True
 
     async def _invoke_unit(self, unit_id: str, message: Message) -> Message:
+        if not self.init_complete:
+            if isinstance(message, Message):
+                return await message.respond("Inline bot is not initialized yet. Please wait...")
+            else:
+                return await self._client.send_message(message, "Inline bot is not initialized yet. Please wait...")
+
         event = asyncio.Event()
         self._error_events[unit_id] = event
 
@@ -237,6 +243,8 @@ class InlineManager(
             nonlocal unit_id, q
             try:
                 q = await self._client.inline_query(self.bot_username, unit_id)
+                if q and q.results:
+                    event.set()
             except Exception as e:
                 logger.error(f"Error in inline query: {e}")
                 event.set()
@@ -269,13 +277,20 @@ class InlineManager(
         if not q or not q.results:
             # Если нет результатов, отправляем обычное сообщение
             if isinstance(message, Message):
-                return await message.respond("No inline results available")
+                return await message.respond("No inline results available. Please try again in a few seconds.")
             else:
-                return await self._client.send_message(message, "No inline results available")
+                return await self._client.send_message(message, "No inline results available. Please try again in a few seconds.")
 
-        return await q[0].click(
-            utils.get_chat_id(message) if isinstance(message, Message) else message,
-            reply_to=(
-                message.reply_to_msg_id if isinstance(message, Message) else None
-            ),
-        )
+        try:
+            return await q[0].click(
+                utils.get_chat_id(message) if isinstance(message, Message) else message,
+                reply_to=(
+                    message.reply_to_msg_id if isinstance(message, Message) else None
+                ),
+            )
+        except Exception as e:
+            logger.error(f"Error clicking inline result: {e}")
+            if isinstance(message, Message):
+                return await message.respond("Error sending inline message. Please try again.")
+            else:
+                return await self._client.send_message(message, "Error sending inline message. Please try again.")
