@@ -179,6 +179,25 @@ class TokenObtainment(InlineUnit):
                             await m.delete()
                             await r.delete()
 
+                            # Включаем инлайн режим
+                            await fw_protect()
+                            m = await conv.send_message("/setinlinefeedback")
+                            r = await conv.get_response()
+                            await m.delete()
+                            await r.delete()
+
+                            await fw_protect()
+                            m = await conv.send_message(f"@{bot_username}")
+                            r = await conv.get_response()
+                            await m.delete()
+                            await r.delete()
+
+                            await fw_protect()
+                            m = await conv.send_message("Enabled")
+                            r = await conv.get_response()
+                            await m.delete()
+                            await r.delete()
+
                             return True
             else:
                 for row in r.reply_markup.rows:
@@ -211,6 +230,25 @@ class TokenObtainment(InlineUnit):
 
                             await fw_protect()
                             m = await conv.send_message("user@astra:~$")
+                            r = await conv.get_response()
+                            await m.delete()
+                            await r.delete()
+
+                            # Включаем инлайн режим
+                            await fw_protect()
+                            m = await conv.send_message("/setinlinefeedback")
+                            r = await conv.get_response()
+                            await m.delete()
+                            await r.delete()
+
+                            await fw_protect()
+                            m = await conv.send_message(button.text)
+                            r = await conv.get_response()
+                            await m.delete()
+                            await r.delete()
+
+                            await fw_protect()
+                            m = await conv.send_message("Enabled")
                             r = await conv.get_response()
                             await m.delete()
                             await r.delete()
